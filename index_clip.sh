@@ -1,0 +1,1 @@
+python clip_retrieval/cli.py index --embeddings_folder=embedding_folder_without_augment --index_folder=index_folder_without_augment

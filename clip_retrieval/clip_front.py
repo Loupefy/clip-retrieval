@@ -9,8 +9,9 @@ def add_static_endpoints(app, default_backend=None, default_index=None, url_colu
     """add static endpoints to the flask app"""
     import pkg_resources  # pylint: disable=import-outside-toplevel
 
-    front_path = pkg_resources.resource_filename("clip_retrieval", "../front/build")
-
+    # front_path = pkg_resources.resource_filename("front/build")
+    front_path = "../front/build"
+    
     def static_dir_():
         return send_from_directory(front_path, "index.html")
 
@@ -33,7 +34,7 @@ def add_static_endpoints(app, default_backend=None, default_index=None, url_colu
 def clip_front(default_backend=None, default_index=None, url_column="url"):
     app = Flask(__name__)
     add_static_endpoints(app, default_backend, default_index, url_column)
-    app.run(host="0.0.0.0", port=1235, debug=False)
+    app.run(host="0.0.0.0", port=1234, debug=False)
 
 
 if __name__ == "__main__":

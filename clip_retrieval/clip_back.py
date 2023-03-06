@@ -31,7 +31,7 @@ from prometheus_client import Histogram, REGISTRY, make_wsgi_app
 import math
 import logging
 
-from clip_retrieval.ivf_metadata_ordering import (
+from ivf_metadata_ordering import (
     Hdf5Sink,
     external_sort_parquet,
     get_old_to_new_mapping,
@@ -79,8 +79,10 @@ def convert_metadata_to_base64(meta):
     if meta is not None and "image_path" in meta:
         path = meta["image_path"]
         if os.path.exists(path):
-            img = Image.open(path)
+            img = Image.open(path).convert('RGB')
+            
             buffered = BytesIO()
+            
             img.save(buffered, format="JPEG")
             img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
             meta["image"] = img_str
@@ -212,6 +214,7 @@ class KnnService(Resource):
     ):
         """compute the query embedding"""
         import torch  # pylint: disable=import-outside-toplevel
+        import clip  # pylint: disable=import-outside-toplevel
 
         if text_input is not None and text_input != "":
             if use_mclip:
@@ -219,7 +222,7 @@ class KnnService(Resource):
                     query = normalized(clip_resource.model_txt_mclip(text_input))
             else:
                 with TEXT_PREPRO_TIME.time():
-                    text = clip_resource.tokenizer([text_input]).to(clip_resource.device)
+                    text = clip.tokenize([text_input], truncate=True).to(clip_resource.device)
                 with TEXT_CLIP_INFERENCE_TIME.time():
                     with torch.no_grad():
                         text_features = clip_resource.model.encode_text(text)
@@ -246,7 +249,6 @@ class KnnService(Resource):
             aesthetic_embedding = clip_resource.aesthetic_embeddings[aesthetic_score]
             query = query + aesthetic_embedding * aesthetic_weight
             query = query / np.linalg.norm(query)
-
         return query
 
     def hash_based_dedup(self, embeddings):
@@ -344,8 +346,9 @@ class KnnService(Resource):
         text_index = clip_resource.text_index
         if clip_resource.metadata_is_ordered_by_ivf:
             ivf_old_to_new_mapping = clip_resource.ivf_old_to_new_mapping
-
+        
         index = image_index if modality == "image" else text_index
+        
 
         with KNN_INDEX_TIME.time():
             if clip_resource.metadata_is_ordered_by_ivf:
@@ -461,7 +464,6 @@ class KnnService(Resource):
         results = self.map_to_metadata(
             indices, distances, num_images, clip_resource.metadata_provider, clip_resource.columns_to_return
         )
-
         return results
 
     @FULL_KNN_REQUEST_TIME.time()
@@ -470,21 +472,39 @@ class KnnService(Resource):
         json_data = request.get_json(force=True)
         text_input = json_data.get("text", None)
         image_input = json_data.get("image", None)
-        image_url_input = json_data.get("image_url", None)
-        embedding_input = json_data.get("embedding_input", None)
-        modality = json_data["modality"]
-        num_images = json_data["num_images"]
-        num_result_ids = json_data.get("num_result_ids", num_images)
-        indice_name = json_data["indice_name"]
-        use_mclip = json_data.get("use_mclip", False)
-        deduplicate = json_data.get("deduplicate", False)
-        use_safety_model = json_data.get("use_safety_model", False)
-        use_violence_detector = json_data.get("use_violence_detector", False)
-        aesthetic_score = json_data.get("aesthetic_score", "")
-        aesthetic_score = int(aesthetic_score) if aesthetic_score != "" else None
-        aesthetic_weight = json_data.get("aesthetic_weight", "")
+        is_base64 = json_data.get("base64", True)
+        num_images = json_data.get("num_images", 25)
+        
+        # image_url_input = json_data.get("image_url", None)
+        # embedding_input = json_data.get("embedding_input", None)
+        # modality = json_data["modality"]
+        # num_result_ids = json_data.get("num_result_ids", num_images)
+        # indice_name = json_data["indice_name"]
+        # use_mclip = json_data.get("use_mclip", False)
+        # deduplicate = json_data.get("deduplicate", False)
+        # use_safety_model = json_data.get("use_safety_model", False)
+        # use_violence_detector = json_data.get("use_violence_detector", False)
+        # aesthetic_score = json_data.get("aesthetic_score", "")
+        # aesthetic_score = int(aesthetic_score) if aesthetic_score != "" else None
+        # aesthetic_weight = json_data.get("aesthetic_weight", "")
+        
+        print("///////////////////////////////")
+        
+        image_url_input = None
+        embedding_input = None
+        modality = "image"
+        # num_images = 50
+        num_result_ids = 3000
+        indice_name = "example_index"
+        use_mclip =  False
+        deduplicate = True
+        use_safety_model = True
+        use_violence_detector = True
+        aesthetic_score = None
+        aesthetic_weight = ""
         aesthetic_weight = float(aesthetic_weight) if aesthetic_weight != "" else None
-        return self.query(
+        
+        response = self.query(
             text_input,
             image_input,
             image_url_input,
@@ -500,6 +520,18 @@ class KnnService(Resource):
             aesthetic_score,
             aesthetic_weight,
         )
+        
+        if is_base64:
+            return response
+        else:
+            res = []
+            for i, prod in enumerate(response):
+                if "image_path" in prod:
+                    path = prod['image_path']
+                    path = os.path.basename(path)
+                    path = path.split('.')[0]
+                    res.append({ "product": { "product_id": path } , "score": prod['similarity']})
+            return res
 
 
 def meta_to_dict(meta):
@@ -518,6 +550,8 @@ class ParquetMetadataProvider:
 
     def __init__(self, parquet_folder):
         data_dir = Path(parquet_folder)
+        # print(parquet_folder)
+        # exit()
         self.metadata_df = pd.concat(
             pd.read_parquet(parquet_file) for parquet_file in sorted(data_dir.glob("*.parquet"))
         )
@@ -721,7 +755,6 @@ def load_safety_model(clip_model):
     """load the safety model"""
     import autokeras as ak  # pylint: disable=import-outside-toplevel
     from tensorflow.keras.models import load_model  # pylint: disable=import-outside-toplevel
-    from clip_retrieval.h14_nsfw_model import H14_NSFW_Detector  # pylint: disable=import-outside-toplevel
 
     cache_folder = get_cache_folder(clip_model)
 
@@ -731,8 +764,6 @@ def load_safety_model(clip_model):
     elif clip_model == "ViT-B/32":
         model_dir = cache_folder + "/clip_autokeras_nsfw_b32"
         dim = 512
-    elif clip_model == "open_clip:ViT-H-14":
-        return H14_NSFW_Detector()
     else:
         raise ValueError(f"Safety model for {clip_model} not available.")
     if not os.path.exists(model_dir):
@@ -768,7 +799,6 @@ class ClipResource:
     device: str
     model: Any
     preprocess: Callable
-    tokenizer: Callable
     model_txt_mclip: Any
     safety_model: Any
     violence_detector: Any
@@ -857,12 +887,10 @@ def load_mclip(clip_model):
 def load_clip_index(clip_options):
     """load the clip index"""
     import torch  # pylint: disable=import-outside-toplevel
-    from clip_retrieval.load_clip import load_clip, get_tokenizer  # pylint: disable=import-outside-toplevel
+    from load_clip import load_clip  # pylint: disable=import-outside-toplevel
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model, preprocess = load_clip(clip_options.clip_model, use_jit=clip_options.use_jit, device=device)
-
-    tokenizer = get_tokenizer(clip_options.clip_model)
 
     if clip_options.enable_mclip_option:
         model_txt_mclip = load_mclip(clip_options.clip_model)
@@ -876,10 +904,10 @@ def load_clip_index(clip_options):
     aesthetic_embeddings = (
         get_aesthetic_embedding(clip_options.clip_model) if clip_options.provide_aesthetic_embeddings else None
     )
-
     image_present = os.path.exists(clip_options.indice_folder + "/image.index")
     text_present = os.path.exists(clip_options.indice_folder + "/text.index")
-
+    
+    
     LOGGER.info("loading indices...")
     image_index = (
         load_index(clip_options.indice_folder + "/image.index", clip_options.enable_faiss_memory_mapping)
@@ -907,7 +935,6 @@ def load_clip_index(clip_options):
         device=device,
         model=model,
         preprocess=preprocess,
-        tokenizer=tokenizer,
         model_txt_mclip=model_txt_mclip,
         safety_model=safety_model,
         violence_detector=violence_detector,
@@ -957,7 +984,7 @@ def clip_back(
     default_backend=None,
     url_column="url",
     enable_mclip_option=True,
-    clip_model="ViT-B/32",
+    clip_model="ViT-L/14",
     use_jit=True,
     use_arrow=False,
     provide_safety_model=False,
@@ -971,7 +998,7 @@ def clip_back(
     clip_resources = load_clip_indices(
         indices_paths=indices_paths,
         clip_options=ClipOptions(
-            indice_folder="",
+            indice_folder="data",
             clip_model=clip_model,
             enable_hdf5=enable_hdf5,
             enable_faiss_memory_mapping=enable_faiss_memory_mapping,
@@ -989,7 +1016,7 @@ def clip_back(
 
     app = Flask(__name__)
     app.wsgi_app = DispatcherMiddleware(app.wsgi_app, {"/metrics": make_wsgi_app()})
-    from .clip_front import add_static_endpoints  # pylint: disable=import-outside-toplevel
+    from clip_front import add_static_endpoints  # pylint: disable=import-outside-toplevel
 
     add_static_endpoints(app, default_backend, None, url_column)
 

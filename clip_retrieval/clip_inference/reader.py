@@ -5,6 +5,8 @@ from PIL import Image
 from torch.utils.data import DataLoader
 from torch.utils.data.dataloader import default_collate
 import io
+from PIL import ImageFile
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
 def folder_to_keys(folder, enable_text=True, enable_image=True, enable_metadata=False):
@@ -88,7 +90,7 @@ def get_image_dataset():
 
             if self.enable_image:
                 image_file = self.image_files[key]
-                image_tensor = self.image_transform(Image.open(image_file))
+                image_tensor = self.image_transform(Image.open(image_file).convert('RGB'))
                 output["image_filename"] = str(image_file)
                 output["image_tensor"] = image_tensor
 
@@ -144,7 +146,7 @@ def create_webdataset(
         output = {}
         if enable_image:
             image_data = item[image_key]
-            image = Image.open(io.BytesIO(image_data))
+            image = Image.open(io.BytesIO(image_data)).convert('RGB')
             image_tensor = image_transform(image)
             output["image_filename"] = item["__key__"]
             output["image_tensor"] = image_tensor

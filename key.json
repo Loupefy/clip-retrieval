@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "agile-vortex-349307",
+  "private_key_id": "05d52dbdda7fa882bbb1375b14a48269e9f1b999",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC089LJNfFfk4Ha\npq9jHPScpCl82lNsHv8Tf2mz5NUBLoiZlDqEvtQ1v3P3lYh6Nyt7rZeAyFCd4s/J\njJ3oTvPH/q8eVvgWzCARlOsQ63JS6vTwHTDhe+TrNx8psrIkZQse/aEV4qUe4Stg\nQCsQfIEodWx3vnNzTe29PkCpeRr5+wKp5LqPGo6Xj3J9DfZAhgsP1f85ypnKWeMG\n7NaZtFpafj7jetuUC45KGv3kAwuu7PWehV6xft4nhuOuGlGWmSaBp6C4O1PREEZe\nZSiveLuXFX2C+ejcKZ8AyiL5SpA6U60ywQssDRC5/rpUF2M3aIbmUCSYx/T074T8\nFLAvLLMLAgMBAAECggEARTvhE3FbN/llPrZ19pMWmHRLF2UldAHsEJa4Z8cPJJOc\nWj6XoUCuSx5EjZ8eB7ziG0EQ7Yo3JiGo5PGzXTYQGh48/HvEElzpjDCRO/kJ1eXl\n75ULpcpUjRabCsY/WKN8fNAH+SqtiMIYaYxDrdwlQsiixrIM1Dol0zllXjJi+u/D\n9XDB3vAnTSujyI+muJJOj6FhIMSuom0XZExnR7FpoUlVatbBDG4WkfV71aWCTuPB\nVpog2ubYJUR8YnPF+K+QgyssoVzNVe9s+Roi6CFlGW4Et7FJYLq90IrQglA2gFc3\nZ7jn+WOx3phZy2dJAqRtUrUCuDDGRzsUrzf+32ugsQKBgQD4OPUVMVogOoQjJvF8\nPiI2ryl9qriIUsUAurFcdrkJZ/HBiMFDlBjfuqICvakCFmEIl5x6yXuabrJuZheg\nFWTKvVgB3+R4rh3RpaCtRbo6qKceM5r3MEN9T8aDe0rwsdj1yfZYTQ8gVGmj/gfK\nlC+bb9icywEcW5jgMsjgrPcx8wKBgQC6n0eDzQiZRSekMdKb4braWcsYiJbty2IF\n0ono6EfsjTNionwibUIhlsWQTBUAjngjRqRe2OVPTFvuCdLZElCoJVgWC1IKTnY9\nTMWLNEjo5SuHsOlCh5AFLH12DRC3Lr3qyJVJUDeejjai6VnIlN+reBObZL91vdfv\noM8cxNcoiQKBgQCsus3pWndx9+Zdo8rlf0NFtGx182gIDTjjwgaL5l3q6rczytta\nEGOixHfa2moSdso9NWuBklV96MwnwMlt75U887ebTlbpl5hOfCgsi1oFWbk5bgXH\nP4GnYO0uL4y9o7TrjQfs+GqvP65nnO2FDct3KcSdjzKNrjvav9xDZHl7+wKBgEl+\nSnqUNyus+USHPmqXBa/RptK9j7qL2slyNU9ckl6M6MySMpKYNm/l4V3HKIo0kQlL\nW5XiksOczaM7iSZlORBOzJa51JAsgBH59t2wNHpLLc5dFC9YFZaEA9CGqquJI8+f\nOHNLvOubE9cqUGpWfpMXUZljnqauoahDyuyIdDcJAoGAZ1hKN/bhSUFJkCCgF7A7\n7E4nF6t9ArPxT4EdwVmOkHEkkHYFA7ve5wRgumcszl3h27cuRtBdExq3SExjSoFj\nNJW/RrjfZeKQ7k5bC9uEuHXilpIdpBvcGhFQ9GC9YkkwXHVunkVWq2Q5MYGngmMc\nBD02/LDENtiqGdGY334TqF4=\n-----END PRIVATE KEY-----\n",
+  "client_email": "hopshop-sa@agile-vortex-349307.iam.gserviceaccount.com",
+  "client_id": "115666587035502229634",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/hopshop-sa%40agile-vortex-349307.iam.gserviceaccount.com"
+}

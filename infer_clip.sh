@@ -1,0 +1,1 @@
+python clip_retrieval/cli.py inference  --input_dataset /mnt/bigdisk/data_small --output_folder embedding_folder_without_augment

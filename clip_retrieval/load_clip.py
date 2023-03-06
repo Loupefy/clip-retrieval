@@ -1,6 +1,8 @@
 """load clip"""
 from functools import lru_cache
-from torch import autocast, nn
+# from torch import autocast
+from torch.cuda.amp import autocast
+from torch import nn
 import torch
 import clip
 from PIL import Image
@@ -52,18 +54,6 @@ def load_open_clip(clip_model, use_jit=True, device="cuda", clip_cache_path=None
     model = OpenClipWrapper(inner_model=model, device=device)
     model.to(device=device)
     return model, preprocess
-
-
-@lru_cache(maxsize=None)
-def get_tokenizer(clip_model):
-    """Load clip"""
-    if clip_model.startswith("open_clip:"):
-        import open_clip  # pylint: disable=import-outside-toplevel
-
-        clip_model = clip_model[len("open_clip:") :]
-        return open_clip.get_tokenizer(clip_model)
-    else:
-        return lambda t: clip.tokenize(t, truncate=True)
 
 
 @lru_cache(maxsize=None)
