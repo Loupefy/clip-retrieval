@@ -1,3 +1,71 @@
+# How to run
+```conda env create -n clip --file environment.yml```
+
+To infer on new image set please edit **infer_clip.sh** , edit **--input_dataset** which can have nested structure and also **--output_folder** for clip embeddings
+
+Then run **index_clip.sh** to get faiss indexing, specify **--embeddings_folder** which is the **output_folder** from previous step. 
+Also specify **--index_folder** for saving indexes.
+
+then edit indices_paths.json → ```{"example_index": "index_folder_name}```
+
+```
+tmux
+conda activate clip;
+./infer_clip.sh;
+./index_clip.sh;
+./back_clip.sh
+```
+
+## Request example:
+
+```
+import requests  
+import base64
+import json
+
+#if num_images is not specified default num is 25 
+#base64 needs to be specified as False for backedn to understand that it does not need to return base64 encoded images, it does for the frontend
+    
+#image to image retrivieal example  
+
+image = "adidas.png"   
+
+with open(image, "rb") as image_file:
+    encoded_string = base64.b64encode(image_file.read())
+    image = str(encoded_string.decode("utf-8"))
+
+res_1 = requests.post("http://35.226.115.83:1234/knn-service", 
+        data=json.dumps({
+        "text": "",
+        "image": image,
+        "base64": False,
+        "num_images": 100
+        })
+    ).json()
+
+print(res_1)
+
+#text to image retrivieal example
+res_2 = requests.post("http://35.226.115.83:1234/knn-service", 
+        data=json.dumps({
+        "text": "adidas red shirt",
+        "image": "",
+        "base64": False,
+        "num_images": 100
+        })
+    ).json()
+
+print(res_2)
+```
+
+Requests also take ```indice_name``` param, which specifies in which indexed set to search.
+default param is ```example_index```
+in clip-retrieval dir there is **indices_paths.json**
+there we can add new indexed sets and name them.
+example: 
+
+```{"example_index": "index_folder_large"}```
+
 # clip-retrieval
 [![pypi](https://img.shields.io/pypi/v/clip-retrieval.svg)](https://pypi.python.org/pypi/clip-retrieval)
 [![NPM version](https://badge.fury.io/js/clip-retrieval-front.svg)](http://badge.fury.io/js/clip-retrieval-front)
