@@ -521,16 +521,25 @@ class KnnService(Resource):
             aesthetic_weight,
         )
         
-        if is_base64:
+        if not is_base64:
             return response
         else:
             res = []
+            products = {}
             for i, prod in enumerate(response):
                 if "image_path" in prod:
                     path = prod['image_path']
+                    print(path)
                     path = os.path.basename(path)
                     path = path.split('.')[0]
-                    res.append({ "product": { "product_id": path } , "score": prod['similarity']})
+                    
+                    path = path.split('___')[0] #for retruning one image per product
+                    
+                    if path not in products:
+                        products[path] = prod['similarity']
+            for prod in products.keys():  
+                res.append({ "product": { "product_id": prod } , "score": products[prod]})
+                
             return res
 
 
